@@ -418,8 +418,10 @@ module tb_top ( input bit core_clk );
         nmi_vector   = 32'hee000000;
         nmi_int   = 0;
 
+`ifndef VMEM_NO_AUTOLOAD
         $readmemh("data.hex",     lmem.mem);
         $readmemh("program.hex",  imem.mem);
+`endif
         tp = $fopen("trace_port.csv","w");
         el = $fopen("exec.log","w");
         $fwrite (el, "//   Cycle : #inst    0    pc    opcode    reg=value   ; mnemonic\n");
@@ -434,6 +436,18 @@ module tb_top ( input bit core_clk );
 `endif
     end
 
+    export "DPI-C" task load_program;
+    export "DPI-C" task load_data;
+
+    task load_program;
+      input string fname;
+      $readmemh(fname, imem.mem);
+    endtask
+
+    task load_data;
+      input string fname;
+      $readmemh(fname, lmem.mem);
+    endtask
 
     assign rst_l = cycleCnt > 5;
     assign porst_l = cycleCnt > 2;

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+#include <getopt.h>
 #include <stdlib.h>
 #include <iostream>
 #include <utility>
@@ -28,6 +29,35 @@ double sc_time_stamp () {
  return main_time;
 }
 
+void load_memories(int argc, char** argv) {
+    static struct option long_options[] = {
+    {"imemload", required_argument, nullptr, 'i'},
+    {"lmemload", required_argument, nullptr, 'l'},
+    {nullptr, no_argument, nullptr, 0}
+  };
+
+  int optind = 1;
+
+  svSetScope(svGetScopeFromName("TOP.tb_top"));
+  while (1) {
+    int c = getopt_long(argc, argv, ":i:l", long_options, nullptr);
+    if (c == -1) {
+      break;
+    }
+    switch (c) {
+      case 0:
+        break;
+      case 'i':
+        load_program(optarg);
+        break;
+      case 'l':
+        load_data(optarg);
+        break;
+      default:
+        break;
+    }
+  }
+}
 
 int main(int argc, char** argv) {
   std::cout << "\nVerilatorTB: Start of sim\n" << std::endl;
@@ -35,6 +65,8 @@ int main(int argc, char** argv) {
   Verilated::commandArgs(argc, argv);
 
   Vtb_top* tb = new Vtb_top;
+
+  load_memories(argc, argv);
 
   // init trace dump
   VerilatedVcdC* tfp = NULL;
