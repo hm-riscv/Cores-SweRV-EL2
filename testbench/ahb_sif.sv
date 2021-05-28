@@ -145,11 +145,11 @@ input [7:0]             arlen,
 input [1:0]             arburst,
 input [2:0]             arsize,
 
-output reg              rvalid,
+output                  rvalid,
 input                   rready,
-output reg [63:0]       rdata,
+output  [63:0]       rdata,
 output reg [1:0]        rresp,
-output reg [TAGW-1:0]   rid,
+output [TAGW-1:0]       rid,
 output                  rlast,
 
 input                   awvalid,
@@ -165,35 +165,47 @@ input [7:0]             wstrb,
 input                   wvalid,
 output                  wready,
 
-output  reg             bvalid,
+output               bvalid,
 input                   bready,
 output reg [1:0]        bresp,
-output reg [TAGW-1:0]   bid
+output  [TAGW-1:0]   bid
 );
 
 parameter MAILBOX_ADDR = 32'hD0580000;
 parameter MEM_SIZE_DW = 8192;
+
+parameter DELAY = 3;
 
 bit [7:0] mem [bit[31:0]];
 bit [63:0] memdata;
 wire [63:0] WriteData;
 wire mailbox_write;
 
+reg [DELAY-1:0] rvalid_delay;
+assign rvalid = rvalid_delay[0];
+reg [DELAY*TAGW-1:0] rid_delay;
+assign rid = rid_delay[TAGW-1:0];
+reg [DELAY-1:0] bvalid_delay;
+assign bvalid = bvalid_delay[0];
+reg [DELAY*TAGW-1:0] bid_delay;
+assign bid = bid_delay[TAGW-1:0];
+reg [DELAY*64-1:0] rdata_delay;
+assign rdata = rdata_delay[63:0];
 
 assign mailbox_write = awvalid && awaddr==MAILBOX_ADDR && rst_l;
 assign WriteData = wdata;
 
 always @ ( posedge aclk or negedge rst_l) begin
     if(!rst_l) begin
-        rvalid  <= 0;
-        bvalid  <= 0;
+        rvalid_delay <= 0;
+        bvalid_delay <= 0;
     end
     else begin
-        bid     <= awid;
-        rid     <= arid;
-        rvalid  <= arvalid;
-        bvalid  <= awvalid;
-        rdata   <= memdata;
+        rvalid_delay <= {arvalid,rvalid_delay[DELAY-1:1]};
+        rid_delay <= {arid,rid_delay[DELAY*TAGW-1:TAGW]};
+        bvalid_delay <= {awvalid,bvalid_delay[DELAY-1:1]};
+        bid_delay <= {awid,bid_delay[DELAY*TAGW-1:TAGW]};
+        rdata_delay <= {memdata,rdata_delay[DELAY*64-1:64]};
     end
 end
 
