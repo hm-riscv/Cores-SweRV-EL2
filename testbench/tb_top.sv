@@ -438,6 +438,8 @@ module tb_top ( input bit core_clk );
 
     export "DPI-C" task load_program;
     export "DPI-C" task load_data;
+    export "DPI-C" task load_iccm;
+    export "DPI-C" task load_dccm;
 
     task load_program;
       input string fname;
@@ -447,6 +449,40 @@ module tb_top ( input bit core_clk );
     task load_data;
       input string fname;
       $readmemh(fname, lmem.mem);
+    endtask
+
+    function logic[38:0] ecc;
+        input [31:0] data;
+        begin
+        ecc[32] = data[0]^data[1]^data[3]^data[4]^data[6]^data[8]^data[10]^data[11]^data[13]^data[15]^data[17]^data[19]^data[21]^data[23]^data[25]^data[26]^data[28]^data[30];
+        ecc[33] = data[0]^data[2]^data[3]^data[5]^data[6]^data[9]^data[10]^data[12]^data[13]^data[16]^data[17]^data[20]^data[21]^data[24]^data[25]^data[27]^data[28]^data[31];
+        ecc[34] = data[1]^data[2]^data[3]^data[7]^data[8]^data[9]^data[10]^data[14]^data[15]^data[16]^data[17]^data[22]^data[23]^data[24]^data[25]^data[29]^data[30]^data[31];
+        ecc[35] = data[4]^data[5]^data[6]^data[7]^data[8]^data[9]^data[10]^data[18]^data[19]^data[20]^data[21]^data[22]^data[23]^data[24]^data[25];
+        ecc[36] = data[11]^data[12]^data[13]^data[14]^data[15]^data[16]^data[17]^data[18]^data[19]^data[20]^data[21]^data[22]^data[23]^data[24]^data[25];
+        ecc[37] = data[26]^data[27]^data[28]^data[29]^data[30]^data[31];
+        ecc[38] = (^data[31:0])^(^ecc[37:32]);
+        ecc[31:0] = data;
+       end
+    endfunction
+
+    task load_iccm;
+      input string fname;
+      logic [7:0] content [0:16*1024-1];
+      $readmemh(fname, content);
+      for (int i = 0; i < 2*1024; i=i+1) begin
+          rvtop.mem.iccm.iccm.mem_bank[0].iccm_bank.ram_core[i] = ecc({content[i*8+3],content[i*8+2],content[i*8+1],content[i*8+0]});
+          rvtop.mem.iccm.iccm.mem_bank[1].iccm_bank.ram_core[i] = ecc({content[i*8+7],content[i*8+6],content[i*8+5],content[i*8+4]});
+      end
+    endtask
+
+    task load_dccm;
+      input string fname;
+      logic [7:0] content [0:16*1024-1];
+      $readmemh(fname, content);
+      for (int i = 0; i < 2*1024; i=i+1) begin
+          rvtop.mem.Gen_dccm_enable.dccm.mem_bank[0].ram.ram_core[i] = ecc({content[i*8+3],content[i*8+2],content[i*8+1],content[i*8+0]});
+          rvtop.mem.Gen_dccm_enable.dccm.mem_bank[1].ram.ram_core[i] = ecc({content[i*8+7],content[i*8+6],content[i*8+5],content[i*8+4]});
+      end
     endtask
 
     assign rst_l = cycleCnt > 5;

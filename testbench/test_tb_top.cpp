@@ -33,6 +33,8 @@ void load_memories(int argc, char** argv) {
     static struct option long_options[] = {
     {"imemload", required_argument, nullptr, 'i'},
     {"lmemload", required_argument, nullptr, 'l'},
+    {"iccmload", required_argument, nullptr, 'c'},
+    {"dccmload", required_argument, nullptr, 'd'},
     {nullptr, no_argument, nullptr, 0}
   };
 
@@ -40,7 +42,7 @@ void load_memories(int argc, char** argv) {
 
   svSetScope(svGetScopeFromName("TOP.tb_top"));
   while (1) {
-    int c = getopt_long(argc, argv, ":i:l", long_options, nullptr);
+    int c = getopt_long(argc, argv, ":i:l:c:d", long_options, nullptr);
     if (c == -1) {
       break;
     }
@@ -52,6 +54,12 @@ void load_memories(int argc, char** argv) {
         break;
       case 'l':
         load_data(optarg);
+        break;
+      case 'c':
+        load_iccm(optarg);
+        break;
+      case 'd':
+        load_dccm(optarg);
         break;
       default:
         break;
