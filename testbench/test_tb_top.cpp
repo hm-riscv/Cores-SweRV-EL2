@@ -68,7 +68,6 @@ void load_memories(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-  std::cout << "\nVerilatorTB: Start of sim\n" << std::endl;
 
   Verilated::commandArgs(argc, argv);
 
@@ -99,7 +98,6 @@ int main(int argc, char** argv) {
   tfp->close();
 #endif
 
-  std::cout << "\nVerilatorTB: End of sim" << std::endl;
   exit(EXIT_SUCCESS);
 
 }
